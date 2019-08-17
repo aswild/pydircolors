@@ -71,6 +71,65 @@ class Dircolors:
             return '\033[%sm%s\033[%sm'%(c, text, self._codes.get('rs', '0'))
         return text
 
+    def format_mode(self, text, mode):
+        """ Format and color the given text based on the given file mode.
+
+        `mode` can be an integer, usually the st_mode field of an os.stat_result
+        object obtained from os.stat() or similar function. It can also be an os.stat_result
+        object, and the st_mode field will be extracted automatically.
+
+        `text` is an arbitrary string which will be colored according to the bits
+        set in `mode` and the colors database loaded in this Dircolors object.
+
+        If `mode` represents a symlink, it will be formatted as such with no dereferencing
+        (since this function doesn't know the file name) """
+        if not self._loaded:
+            return text
+
+        if isinstance(mode, int):
+            pass
+        elif isinstance(mode, os.stat_result):
+            mode = mode.st_mode
+        else:
+            raise ValueError('mode must be int or os.stat_result, not %s'%type(mode))
+
+        if stat.S_ISDIR(mode):
+            if (mode & (stat.S_ISVTX | stat.S_IWOTH)) == (stat.S_ISVTX | stat.S_IWOTH):
+                # sticky and world-writable
+                return self._format_code(text, 'tw')
+            elif mode & stat.S_ISVTX:
+                # sticky but not world-writable
+                return self._format_code(text, 'st')
+            elif mode & stat.S_IWOTH:
+                # world-writable but not sticky
+                return self._format_code(text, 'ow')
+            # normal directory
+            return self._format_code(text, 'di')
+
+        # special file?
+        special_types = (
+            (stat.S_IFLNK,  'ln'), # symlink
+            (stat.S_IFIFO,  'pi'), # pipe (FIFO)
+            (stat.S_IFSOCK, 'so'), # socket
+            (stat.S_IFBLK,  'bd'), # block device
+            (stat.S_IFCHR,  'cd'), # character device
+            (stat.S_ISUID,  'su'), # setuid
+            (stat.S_ISGID,  'sg'), # setgid
+        )
+        for mask, code in special_types:
+            if (mode & mask) == mask:
+                return self._format_code(text, code)
+
+        # executable file?
+        if mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
+            return self._format_code(text, 'ex')
+
+        # regular file, format according to its extension
+        _, ext = os.path.splitext(text)
+        if ext:
+            return self._format_ext(text, ext)
+        return text
+
     def format(self, file, cwd=None, follow_symlinks=False, show_target=True):
         """ Format and color the file given by the name `file`.
 
@@ -83,8 +142,7 @@ class Dircolors:
         and its target in the format:
             linkname -> target
         With linkname formatted as a link color, and the link target formatted as its respective type.
-        If the link target is another link, it will not be recursively dereferenced.
-        """
+        If the link target is another link, it will not be recursively dereferenced. """
         if not self.loaded:
             return file
 
@@ -97,45 +155,11 @@ class Dircolors:
         if (not follow_symlinks) and show_target and stat.S_ISLNK(mode):
             target_path = readlink_at(file, cwd)
             try:
-                stat_at(target_path, cwd) # verify that link isn't broken
+                stat_at(target_path, cwd) # check for broken link
                 target = self.format(target_path, cwd, False, False)
             except OSError:
                 # format as "orphan"
                 target = self._format_code(target_path, 'or') + ' [broken link]'
             return self._format_code(file, 'ln') + ' -> ' + target
 
-        if stat.S_ISDIR(mode):
-            if (mode & (stat.S_ISVTX | stat.S_IWOTH)) == (stat.S_ISVTX | stat.S_IWOTH):
-                # sticky and world-writable
-                return self._format_code(file, 'tw')
-            elif mode & stat.S_ISVTX:
-                # sticky but not world-writable
-                return self._format_code(file, 'st')
-            elif mode & stat.S_IWOTH:
-                # world-writable but not sticky
-                return self._format_code(file, 'ow')
-            # normal directory
-            return self._format_code(file, 'di')
-
-        # special file?
-        special_types = (
-            (stat.S_IFIFO,  'pi'), # pipe (FIFO)
-            (stat.S_IFSOCK, 'so'), # socket
-            (stat.S_IFBLK,  'bd'), # block device
-            (stat.S_IFCHR,  'cd'), # character device
-            (stat.S_ISUID,  'su'), # setuid
-            (stat.S_ISGID,  'sg'), # setgid
-        )
-        for mask, code in special_types:
-            if (mode & mask) == mask:
-                return self._format_code(file, code)
-
-        # executable file?
-        if mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
-            return self._format_code(file, 'ex')
-
-        # regular file, format according to its extension
-        _, ext = os.path.splitext(file)
-        if ext:
-            return self._format_ext(file, ext)
-        return file
+        return self.format_mode(file, mode)
