@@ -1,6 +1,9 @@
 # Dircolors, a Python library for colorizing and formatting filenames like GNU Coreutils'
 # ls and dircolors programs.
 # Requires python 3.3 or later
+#
+# Copyright 2019 Allen Wild <allenwild93@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
 
 import os
 import stat

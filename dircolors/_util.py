@@ -1,4 +1,7 @@
 # private utility functions for pydircolors
+#
+# Copyright 2019 Allen Wild <allenwild93@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
 
 import os
 
