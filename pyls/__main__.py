@@ -10,11 +10,11 @@ if not files:
 
 d = Dircolors()
 for f in files:
-    if os.path.isdir(f):
+    if os.path.isdir(f) and not os.path.islink(f):
         if f != '.':
             print(d.format(f) + ':')
         for ff in sorted(os.listdir(f)):
-            print(d.format(ff, f))
+            print(d.format(ff, f, show_target=True))
         print()
     else:
-        print(d.format(f))
+        print(d.format(f, show_target=True))

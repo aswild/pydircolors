@@ -130,7 +130,7 @@ class Dircolors:
             return self._format_ext(text, ext)
         return text
 
-    def format(self, file, cwd=None, follow_symlinks=False, show_target=True):
+    def format(self, file, cwd=None, follow_symlinks=False, show_target=False):
         """ Format and color the file given by the name `file`.
 
         If `cwd` is not None, it should be a string for the directory relative
