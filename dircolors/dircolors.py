@@ -5,49 +5,7 @@
 import os
 import stat
 
-def _stat_at(file, cwd=None, follow_symlinks=False):
-    """ helper function to call os.stat on a file relative to a given directory.
-    cwd should be a string, and will be opened as read-only (then closed), or an integer
-    for an already-open directory file descriptor (which won't be closed).
-    os.open or os.stat may raise various errors, which are passed on. """
-    if cwd is None:
-        return os.stat(file, follow_symlinks=follow_symlinks)
-    elif isinstance(cwd, str):
-        dirfd = os.open(cwd, os.O_RDONLY)
-        need_to_close = True
-    elif isinstance(cwd, int):
-        dirfd = cwd
-        need_to_close = False
-    else:
-        raise ValueError('cwd must be str, int, or None')
-
-    try:
-        return os.stat(file, dir_fd=dirfd, follow_symlinks=follow_symlinks)
-    finally:
-        if need_to_close:
-            os.close(dirfd)
-
-def _readlink_at(file, cwd=None):
-    """ helper function to call os.readlink on a file relative to a given directory.
-    cwd should be a string, and will be opened as read-only (then closed), or an integer
-    for an already-open directory file descriptor (which won't be closed).
-    os.open or os.readlink may raise various errors, which are passed on. """
-    if cwd is None:
-        return os.readlink(file)
-    elif isinstance(cwd, str):
-        dirfd = os.open(cwd, os.O_RDONLY)
-        need_to_close = True
-    elif isinstance(cwd, int):
-        dirfd = cwd
-        need_to_close = False
-    else:
-        raise ValueError('cwd must be str, int, or None')
-
-    try:
-        return os.readlink(file, dir_fd=dirfd)
-    finally:
-        if need_to_close:
-            os.close(dirfd)
+from ._util import *
 
 class Dircolors:
     def __init__(self, load=True):
@@ -131,15 +89,15 @@ class Dircolors:
             return file
 
         try:
-            st = _stat_at(file, cwd, follow_symlinks)
+            st = stat_at(file, cwd, follow_symlinks)
         except OSError as e:
             return '%s [Error stat-ing: %s]'%(file, e.strerror)
 
         mode = st.st_mode
         if (not follow_symlinks) and show_target and stat.S_ISLNK(mode):
-            target_path = _readlink_at(file, cwd)
+            target_path = readlink_at(file, cwd)
             try:
-                _stat_at(target_path, cwd) # verify that link isn't broken
+                stat_at(target_path, cwd) # verify that link isn't broken
                 target = self.format(target_path, cwd, False, False)
             except OSError:
                 # format as "orphan"
