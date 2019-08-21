@@ -3,7 +3,11 @@
 # Copyright 2019 Allen Wild <allenwild93@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
 
+""" private/internal utility functions for pydircolors """
+
 import os
+
+__all__ = ['stat_at', 'readlink_at']
 
 def stat_at(file, cwd=None, follow_symlinks=False):
     """ helper function to call os.stat on a file relative to a given directory.

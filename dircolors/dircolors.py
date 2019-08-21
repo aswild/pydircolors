@@ -5,12 +5,18 @@
 # Copyright 2019 Allen Wild <allenwild93@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
 
+""" dircolors, a Python library to colorize filenames based on their type
+for terminal use, like GNU ls and dircolors. """
+
 import os
 import stat
 
 from ._util import *
 
 class Dircolors:
+    """ Main dircolors class. Contains a database of formats corresponding to file types,
+    modes, and extensions. Use the format() method to check a file and color it appropriately.
+    """
     def __init__(self, load=True):
         """ Initialize a Dircolors object. If load=True (the default), then try
         to load dircolors info from the LS_COLORS environment variable. """
@@ -60,18 +66,18 @@ class Dircolors:
     def _format_code(self, text, code):
         """ format text with an lscolors code. Return text unmodified if code
         isn't found in the database """
-        c = self._codes.get(code, None)
-        if c:
-            return '\033[%sm%s\033[%sm'%(c, text, self._codes.get('rs', '0'))
+        val = self._codes.get(code, None)
+        if val:
+            return '\033[%sm%s\033[%sm'%(val, text, self._codes.get('rs', '0'))
         return text
 
     def _format_ext(self, text, ext):
         """ Format text according to the given file extension.
         ext should not have a leading '.'
         text need not actually end in '.ext' """
-        c = self._extensions.get(ext, '0')
-        if c:
-            return '\033[%sm%s\033[%sm'%(c, text, self._codes.get('rs', '0'))
+        val = self._extensions.get(ext, '0')
+        if val:
+            return '\033[%sm%s\033[%sm'%(val, text, self._codes.get('rs', '0'))
         return text
 
     def format_mode(self, text, mode):
@@ -100,16 +106,17 @@ class Dircolors:
             if (mode & (stat.S_ISVTX | stat.S_IWOTH)) == (stat.S_ISVTX | stat.S_IWOTH):
                 # sticky and world-writable
                 return self._format_code(text, 'tw')
-            elif mode & stat.S_ISVTX:
+            if mode & stat.S_ISVTX:
                 # sticky but not world-writable
                 return self._format_code(text, 'st')
-            elif mode & stat.S_IWOTH:
+            if mode & stat.S_IWOTH:
                 # world-writable but not sticky
                 return self._format_code(text, 'ow')
             # normal directory
             return self._format_code(text, 'di')
 
         # special file?
+        # pylint: disable=bad-whitespace
         special_types = (
             (stat.S_IFLNK,  'ln'), # symlink
             (stat.S_IFIFO,  'pi'), # pipe (FIFO)
@@ -144,17 +151,17 @@ class Dircolors:
         Use show_target=True with follow_symlinks=False to format both the link name
         and its target in the format:
             linkname -> target
-        With linkname formatted as a link color, and the link target formatted as its respective type.
-        If the link target is another link, it will not be recursively dereferenced. """
+        With linkname formatted as a link color, and the link target formatted as its respective
+        type. If the link target is another link, it will not be recursively dereferenced. """
         if not self.loaded:
             return file
 
         try:
-            st = stat_at(file, cwd, follow_symlinks)
+            statbuf = stat_at(file, cwd, follow_symlinks)
         except OSError as e:
             return '%s [Error stat-ing: %s]'%(file, e.strerror)
 
-        mode = st.st_mode
+        mode = statbuf.st_mode
         if (not follow_symlinks) and show_target and stat.S_ISLNK(mode):
             target_path = readlink_at(file, cwd)
             try:

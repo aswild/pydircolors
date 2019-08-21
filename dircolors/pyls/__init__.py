@@ -1,2 +1,2 @@
 # dircolors.pyls package
-# This file intentionally left blank
+""" pyls - a simple implementation of `ls` used to test python-dircolors """
