@@ -10,8 +10,33 @@ for terminal use, like GNU ls and dircolors. """
 
 import os
 import stat
+import sys
 
+from ._defaults import DEFAULT_DIRCOLORS
 from ._util import *
+
+# mapping between the key name in the .dircolors file and the two letter
+# code found in the LS_COLORS environment variable.
+_CODE_MAP = {
+    'RESET':                    'rs',
+    'DIR':                      'di',
+    'LINK':                     'ln',
+    'MULTIHARDLINK':            'mh',
+    'FIFO':                     'pi',
+    'SOCK':                     'so',
+    'DOOR':                     'do',
+    'BLK':                      'bd',
+    'CHR':                      'cd',
+    'ORPHAN':                   'or',
+    'MISSING':                  'mi',
+    'SETUID':                   'su',
+    'SETGID':                   'sg',
+    'CAPABILITY':               'ca',
+    'STICKY_OTHER_WRITABLE':    'tw',
+    'OTHER_WRITABLE':           'ow',
+    'STICKY':                   'st',
+    'EXEC':                     'ex',
+}
 
 class Dircolors:
     """ Main dircolors class. Contains a database of formats corresponding to file types,
@@ -19,12 +44,23 @@ class Dircolors:
     """
     def __init__(self, load=True):
         """ Initialize a Dircolors object. If load=True (the default), then try
-        to load dircolors info from the LS_COLORS environment variable. """
+        to load dircolors info from the LS_COLORS environment variable.
+        If no data is obtained from LS_COLORS, load the defaults. """
+        self._loaded = False
         self.clear()
         if load:
             self.load_from_environ()
 
+        if not self._loaded:
+            self.load_defaults()
+
     def __bool__(self):
+        """ convenience method for checking whether this Dircolors object has loaded a database.
+        Can be used like
+            d = Dircolors()
+            if d:
+                d.format(somefile)
+        """
         return self._loaded
 
     @property
@@ -60,8 +96,64 @@ class Dircolors:
 
         if self._codes or self._extensions:
             self._loaded = True
-            return True
-        return False
+        return self._loaded
+
+    def _load_from_dircolors_content(self, content):
+        """ Load the database from the contents of a .dircolors file """
+        for line in content.splitlines():
+            # remove comments and skip empty lines
+            line = line.split('#')[0].strip()
+            if not line:
+                continue
+
+            # make sure there's two space-separated fields
+            split = line.split()
+            if len(split) != 2:
+                print('Warning: unable to parse dircolors line "%s"'%line, file=sys.stderr)
+                continue
+
+            key, val = split
+            if key == 'TERM':
+                continue # ignore TERM directives
+            elif key in _CODE_MAP:
+                self._codes[_CODE_MAP[key]] = val
+            elif key.startswith('.'):
+                self._extensions[key] = val
+            else:
+                print('Warning: unable to parse dircolors line "%s"'%line, file=sys.stderr)
+
+        if self._codes or self._extensions:
+            self._loaded = True
+        return self._loaded
+
+    def load_from_dircolors(self, filename):
+        """ Load the dircolors database from a GNU-compatible .dircolors file.
+        May raise any of the usual OSError exceptions if filename doesn't exist
+        or otherwise can't be read.
+        Returns a boolean indicating whether any data was loaded.
+        The current database will always be cleared. """
+        self.clear()
+        with open(filename, 'r') as fp:
+            return self._load_from_dircolors_content(fp.read())
+
+    def load_defaults(self):
+        """ Load the default database. """
+        self.clear()
+        return self._load_from_dircolors_content(DEFAULT_DIRCOLORS)
+
+    def generate_lscolors(self):
+        """ Output the database in the format used by the LS_COLORS environment variable. """
+        if not self._loaded:
+            return ''
+
+        def gen_pairs():
+            for pair in self._codes.items():
+                yield pair
+            for pair in self._extensions.items():
+                # change .xyz to *.xyz
+                yield '*' + pair[0], pair[1]
+
+        return ':'.join('%s=%s'%pair for pair in gen_pairs())
 
     def _format_code(self, text, code):
         """ format text with an lscolors code. Return text unmodified if code
