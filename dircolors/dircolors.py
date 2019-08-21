@@ -165,7 +165,7 @@ class Dircolors:
 
     def _format_ext(self, text, ext):
         """ Format text according to the given file extension.
-        ext should not have a leading '.'
+        ext must have a leading '.'
         text need not actually end in '.ext' """
         val = self._extensions.get(ext, '0')
         if val:
