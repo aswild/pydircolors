@@ -5,6 +5,9 @@ PYTHON ?= python3
 test:
 	$(PYTHON) -m unittest -v tests
 
+lint:
+	pylint dircolors tests setup.py
+
 dist:
 	rm -rf dist
 	$(PYTHON) setup.py sdist bdist_wheel
@@ -20,5 +23,5 @@ clean:
 distclean: clean
 	rm -rf venv
 
-.PHONY: test dist venv clean distclean
+.PHONY: test lint dist venv clean distclean
 .NOTPARALLEL:
