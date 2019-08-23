@@ -8,9 +8,9 @@
 """ dircolors, a Python library to colorize filenames based on their type
 for terminal use, like GNU ls and dircolors. """
 
+from io import StringIO, TextIOBase
 import os
 import stat
-import sys
 
 from ._defaults import DEFAULT_DIRCOLORS
 from ._util import *
@@ -45,14 +45,13 @@ class Dircolors:
     def __init__(self, load=True):
         """ Initialize a Dircolors object. If load=True (the default), then try
         to load dircolors info from the LS_COLORS environment variable.
-        If no data is obtained from LS_COLORS, load the defaults. """
+        If no data is obtained from LS_COLORS, load the defaults.
+        If load=False, don't even load defaults. """
         self._loaded = False
         self.clear()
         if load:
-            self.load_from_environ()
-
-        if not self._loaded:
-            self.load_defaults()
+            if not self.load_from_environ():
+                self.load_defaults()
 
     def __bool__(self):
         """ convenience method for checking whether this Dircolors object has loaded a database.
@@ -74,13 +73,12 @@ class Dircolors:
         self._codes = {}
         self._extensions = {}
 
-    def load_from_environ(self, envvar='LS_COLORS'):
-        """ Load the dircolors database from an environment variable. By default,
-        use LS_COLORS like the GNU Coreutils `ls` program.
+    def load_from_lscolors(self, lscolors):
+        """ Load the dircolors database from a string in the same format as the LS_COLORS
+        environment variable.
         Returns True if data was successfully loaded, False otherwise (e.g. if
         envvar is unset). Regardless, the current database will be cleared """
         self.clear()
-        lscolors = os.environ.get(envvar)
         if not lscolors:
             return False
 
@@ -98,51 +96,69 @@ class Dircolors:
             self._loaded = True
         return self._loaded
 
-    def _load_from_dircolors_content(self, content, strict=False):
-        """ Load the database from the contents of a .dircolors file """
-        for line in content.splitlines():
-            # remove comments and skip empty lines
-            line = line.split('#')[0].strip()
-            if not line:
-                continue
+    def load_from_environ(self, envvar='LS_COLORS'):
+        """ Load the dircolors database from an environment variable. By default,
+        use LS_COLORS like the GNU Coreutils `ls` program.
+        Returns True if data was successfully loaded, False otherwise (e.g. if
+        envvar is unset). Regardless, the current database will be cleared. """
+        return self.load_from_lscolors(os.environ.get(envvar))
 
-            # make sure there's two space-separated fields
-            split = line.split()
-            if len(split) != 2:
-                if strict:
-                    raise ValueError('Warning: unable to parse dircolors line "%s"'%line)
-                continue
-
-            key, val = split
-            if key == 'TERM':
-                continue # ignore TERM directives
-            elif key in _CODE_MAP:
-                self._codes[_CODE_MAP[key]] = val
-            elif key.startswith('.'):
-                self._extensions[key] = val
-            elif strict:
-                raise ValueError('Warning: unable to parse dircolors line "%s"'%line)
-            # elif not strict, skip
-
-        if self._codes or self._extensions:
-            self._loaded = True
-        return self._loaded
-
-    def load_from_dircolors(self, filename, strict=False):
+    def load_from_dircolors(self, database, strict=False):
         """ Load the dircolors database from a GNU-compatible .dircolors file.
         May raise any of the usual OSError exceptions if filename doesn't exist
         or otherwise can't be read.
+
+        database can be a string representing a filename, or a file-like object
+        opened in text mode (i.e. a subclass of io.TextIOBase). To load from the
+        contents of a .dircolors file, wrap it in an io.StringIO object.
+
         If strict is True, raise ValueError on the first unparsed line
+
         Returns a boolean indicating whether any data was loaded.
         The current database will always be cleared. """
         self.clear()
-        with open(filename, 'r') as fp:
-            return self._load_from_dircolors_content(fp.read(), strict)
+        if isinstance(database, str):
+            file = open(database, 'r')
+        elif isinstance(database, TextIOBase):
+            file = database
+        else:
+            raise ValueError('argument database must be str or io.TextIOBase, not %s'%type(database))
+
+        try:
+            for line in file:
+                # remove comments and skip empty lines
+                line = line.split('#')[0].strip()
+                if not line:
+                    continue
+
+                # make sure there's two space-separated fields
+                split = line.split()
+                if len(split) != 2:
+                    if strict:
+                        raise ValueError('Warning: unable to parse dircolors line "%s"'%line)
+                    continue
+
+                key, val = split
+                if key == 'TERM':
+                    continue # ignore TERM directives
+                elif key in _CODE_MAP:
+                    self._codes[_CODE_MAP[key]] = val
+                elif key.startswith('.'):
+                    self._extensions[key] = val
+                elif strict:
+                    raise ValueError('Warning: unable to parse dircolors line "%s"'%line)
+                # elif not strict, skip
+
+            if self._codes or self._extensions:
+                self._loaded = True
+            return self._loaded
+        finally:
+            file.close()
 
     def load_defaults(self):
         """ Load the default database. """
         self.clear()
-        return self._load_from_dircolors_content(DEFAULT_DIRCOLORS, True)
+        return self.load_from_dircolors(StringIO(DEFAULT_DIRCOLORS), True)
 
     def generate_lscolors(self):
         """ Output the database in the format used by the LS_COLORS environment variable. """
