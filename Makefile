@@ -15,9 +15,10 @@ dist:
 venv: venv/bin/activate
 venv/bin/activate:
 	$(PYTHON) -m venv venv
+	. $@; pip install -U pip; pip install -r requirements-dev.txt
 
 clean:
-	find . -path ./venv -prune -o -name __pycache__ -exec rm -rvf {} \; -prune
+	find . -path ./venv -prune -o -name __pycache__ -exec rm -rf {} \; -prune
 	rm -rf build dist *.egg-info
 
 distclean: clean
