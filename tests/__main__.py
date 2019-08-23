@@ -5,6 +5,7 @@ from unittest import TextTestRunner
 from . import full_suite
 
 if __name__ == '__main__':
+    # pylint: disable=invalid-name
     runner = TextTestRunner(verbosity=2)
     suite = full_suite()
     runner.run(suite)

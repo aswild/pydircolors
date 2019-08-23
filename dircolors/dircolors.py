@@ -122,7 +122,7 @@ class Dircolors:
         elif isinstance(database, TextIOBase):
             file = database
         else:
-            raise ValueError('argument database must be str or io.TextIOBase, not %s'%type(database))
+            raise ValueError('database must be str or io.TextIOBase, not %s'%type(database))
 
         try:
             for line in file:

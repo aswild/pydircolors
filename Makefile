@@ -6,6 +6,7 @@ test:
 	$(PYTHON) -m unittest -v tests
 
 dist:
+	rm -rf dist
 	$(PYTHON) setup.py sdist bdist_wheel
 
 venv: venv/bin/activate
