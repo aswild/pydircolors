@@ -3,12 +3,28 @@
 #
 # Copyright 2019 Allen Wild <allenwild93@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
+#
+# pylint: disable=bad-whitespace,missing-docstring
 
-from setuptools import setup, find_packages
+import os
+import re
+from setuptools import setup
+
+def get_version():
+    """ get the dircolors version by regex-parsing __init__.py
+    see https://packaging.python.org/guides/single-sourcing-package-version """
+    mydir = os.path.dirname(os.path.abspath(__file__))
+    filename = os.path.join(mydir, 'dircolors', '__init__.py')
+    with open(filename, 'r') as fp:
+        for line in fp:
+            m = re.match(r'^__version__\s*=\s*[\'"](.*)[\'"]', line)
+            if m:
+                return m.group(1)
+    raise RuntimeError('Unable to find version in "%s"'%filename)
 
 setup(
     name            = 'dircolors',
-    version         = '0.0.1',
+    version         = get_version(),
     author          = 'Allen Wild',
     author_email    = 'allenwild93@gmail.com',
     license         = 'Apache-2.0',
