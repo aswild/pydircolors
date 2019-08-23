@@ -98,7 +98,7 @@ class Dircolors:
             self._loaded = True
         return self._loaded
 
-    def _load_from_dircolors_content(self, content):
+    def _load_from_dircolors_content(self, content, strict=False):
         """ Load the database from the contents of a .dircolors file """
         for line in content.splitlines():
             # remove comments and skip empty lines
@@ -109,7 +109,8 @@ class Dircolors:
             # make sure there's two space-separated fields
             split = line.split()
             if len(split) != 2:
-                print('Warning: unable to parse dircolors line "%s"'%line, file=sys.stderr)
+                if strict:
+                    raise ValueError('Warning: unable to parse dircolors line "%s"'%line)
                 continue
 
             key, val = split
@@ -119,27 +120,29 @@ class Dircolors:
                 self._codes[_CODE_MAP[key]] = val
             elif key.startswith('.'):
                 self._extensions[key] = val
-            else:
-                print('Warning: unable to parse dircolors line "%s"'%line, file=sys.stderr)
+            elif strict:
+                raise ValueError('Warning: unable to parse dircolors line "%s"'%line)
+            # elif not strict, skip
 
         if self._codes or self._extensions:
             self._loaded = True
         return self._loaded
 
-    def load_from_dircolors(self, filename):
+    def load_from_dircolors(self, filename, strict=False):
         """ Load the dircolors database from a GNU-compatible .dircolors file.
         May raise any of the usual OSError exceptions if filename doesn't exist
         or otherwise can't be read.
+        If strict is True, raise ValueError on the first unparsed line
         Returns a boolean indicating whether any data was loaded.
         The current database will always be cleared. """
         self.clear()
         with open(filename, 'r') as fp:
-            return self._load_from_dircolors_content(fp.read())
+            return self._load_from_dircolors_content(fp.read(), strict)
 
     def load_defaults(self):
         """ Load the default database. """
         self.clear()
-        return self._load_from_dircolors_content(DEFAULT_DIRCOLORS)
+        return self._load_from_dircolors_content(DEFAULT_DIRCOLORS, True)
 
     def generate_lscolors(self):
         """ Output the database in the format used by the LS_COLORS environment variable. """
