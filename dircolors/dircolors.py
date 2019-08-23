@@ -8,6 +8,7 @@
 """ dircolors, a Python library to colorize filenames based on their type
 for terminal use, like GNU ls and dircolors. """
 
+from collections import OrderedDict
 from io import StringIO, TextIOBase
 import os
 import stat
@@ -15,28 +16,37 @@ import stat
 from ._defaults import DEFAULT_DIRCOLORS
 from ._util import *
 
-# mapping between the key name in the .dircolors file and the two letter
-# code found in the LS_COLORS environment variable.
-_CODE_MAP = {
-    'RESET':                    'rs',
-    'DIR':                      'di',
-    'LINK':                     'ln',
-    'MULTIHARDLINK':            'mh',
-    'FIFO':                     'pi',
-    'SOCK':                     'so',
-    'DOOR':                     'do',
-    'BLK':                      'bd',
-    'CHR':                      'cd',
-    'ORPHAN':                   'or',
-    'MISSING':                  'mi',
-    'SETUID':                   'su',
-    'SETGID':                   'sg',
-    'CAPABILITY':               'ca',
-    'STICKY_OTHER_WRITABLE':    'tw',
-    'OTHER_WRITABLE':           'ow',
-    'STICKY':                   'st',
-    'EXEC':                     'ex',
-}
+__all__ = ['Dircolors']
+
+_CODE_MAP = OrderedDict()
+def _init_code_map():
+    """ mapping between the key name in the .dircolors file and the two letter
+    code found in the LS_COLORS environment variable.
+    Used for parsing .dircolors files. """
+    # This code is wrapped in a function so we can disable pylint's whitespace check
+    # on a limited scope.
+    # pylint: disable=bad-whitespace
+    _CODE_MAP['RESET']                  = 'rs'
+    _CODE_MAP['DIR']                    = 'di'
+    _CODE_MAP['LINK']                   = 'ln'
+    _CODE_MAP['MULTIHARDLINK']          = 'mh'
+    _CODE_MAP['FIFO']                   = 'pi'
+    _CODE_MAP['SOCK']                   = 'so'
+    _CODE_MAP['DOOR']                   = 'do'
+    _CODE_MAP['BLK']                    = 'bd'
+    _CODE_MAP['CHR']                    = 'cd'
+    _CODE_MAP['ORPHAN']                 = 'or'
+    _CODE_MAP['MISSING']                = 'mi'
+    _CODE_MAP['SETUID']                 = 'su'
+    _CODE_MAP['SETGID']                 = 'sg'
+    _CODE_MAP['CAPABILITY']             = 'ca'
+    _CODE_MAP['STICKY_OTHER_WRITABLE']  = 'tw'
+    _CODE_MAP['OTHER_WRITABLE']         = 'ow'
+    _CODE_MAP['STICKY']                 = 'st'
+    _CODE_MAP['EXEC']                   = 'ex'
+
+_init_code_map()
+del _init_code_map
 
 class Dircolors:
     """ Main dircolors class. Contains a database of formats corresponding to file types,
@@ -48,7 +58,8 @@ class Dircolors:
         If no data is obtained from LS_COLORS, load the defaults.
         If load=False, don't even load defaults. """
         self._loaded = False
-        self.clear()
+        self._codes = OrderedDict()
+        self._extensions = OrderedDict()
         if load:
             if not self.load_from_environ():
                 self.load_defaults()
@@ -70,8 +81,8 @@ class Dircolors:
     def clear(self):
         """ Clear the loaded data """
         self._loaded = False
-        self._codes = {}
-        self._extensions = {}
+        self._codes.clear()
+        self._extensions.clear()
 
     def load_from_lscolors(self, lscolors):
         """ Load the dircolors database from a string in the same format as the LS_COLORS
