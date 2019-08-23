@@ -14,7 +14,8 @@ setup(
     license         = 'Apache-2.0',
     url             = 'https://github.com/aswild/pydircolors',
     python_requires = ">=3.3",
-    packages        = find_packages(),
+    packages        = ['dircolors'],
+    test_suite      = 'tests.full_suite',
     entry_points    = {
         'console_scripts': [
             'pyls = dircolors.pyls.__main__:main',
