@@ -8,4 +8,4 @@ for terminal use, like GNU ls and dircolors. """
 
 from .dircolors import Dircolors
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
