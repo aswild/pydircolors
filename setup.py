@@ -37,11 +37,11 @@ setup(
     license         = 'Apache-2.0',
     url             = 'https://github.com/aswild/pydircolors',
     python_requires = ">=3.3",
-    packages        = ['dircolors'],
+    packages        = ['dircolors', 'dircolors.pyls'],
     test_suite      = 'tests.full_suite',
     entry_points = {
         'console_scripts': [
-            'pyls = dircolors.pyls.__main__:main',
+            'pyls = dircolors.pyls.pyls:main',
         ]
     },
     classifiers = [

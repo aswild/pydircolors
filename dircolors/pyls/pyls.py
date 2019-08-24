@@ -5,6 +5,7 @@
 
 """ pyls - a simple implementation of `ls` used to test python-dircolors """
 
+import argparse
 import os
 import sys
 
@@ -13,7 +14,11 @@ from ..dircolors import Dircolors
 def main():
     """ pyls main function """
     # pylint: disable=invalid-name
-    files = sys.argv[1:]
+    parser = argparse.ArgumentParser(prog='pyls', description='Python implementation of the "ls" command for testing dircolors')
+    parser.add_argument('files', nargs='*', metavar='FILE', help='File or directories to list')
+    args = parser.parse_args()
+
+    files = args.files
     if not files:
         files = ['.']
 
@@ -21,7 +26,7 @@ def main():
     for f in files:
         try:
             if os.path.isdir(f) and not os.path.islink(f):
-                if f != '.':
+                if f != '.' and len(files) > 1:
                     print(dc.format(f) + ':')
                 for ff in sorted(os.listdir(f)):
                     print(dc.format(ff, f, show_target=True))
