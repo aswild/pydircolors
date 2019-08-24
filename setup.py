@@ -22,22 +22,29 @@ def get_version():
                 return m.group(1)
     raise RuntimeError('Unable to find version in "%s"'%filename)
 
+def read_readme():
+    with open('README.md', 'r') as fp:
+        return fp.read()
+
 setup(
     name            = 'dircolors',
     version         = get_version(),
     author          = 'Allen Wild',
     author_email    = 'allenwild93@gmail.com',
+    description     = 'Python library to colorize and format file names based on type',
+    long_description= read_readme(),
+    long_description_content_type = 'text/markdown',
     license         = 'Apache-2.0',
     url             = 'https://github.com/aswild/pydircolors',
     python_requires = ">=3.3",
     packages        = ['dircolors'],
     test_suite      = 'tests.full_suite',
-    entry_points    = {
+    entry_points = {
         'console_scripts': [
             'pyls = dircolors.pyls.__main__:main',
         ]
     },
-    classifiers     = [
+    classifiers = [
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3 :: Only',
@@ -46,5 +53,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Operating System :: POSIX',
+        'Operating System :: POSIX :: Linux',
     ]
 )
