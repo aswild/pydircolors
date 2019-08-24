@@ -30,6 +30,9 @@ Install from source in development mode:
 
     python setup.py develop
 
+On Arch Linux and its derivatives, you can install the
+[python-dircolors](https://aur.archlinux.org/packages/python-dircolors) AUR package.
+
 ## Usage
 Start by creating a `Dircolors` object and calling its `format()` method with the filename you want
 to colorize.
