@@ -17,6 +17,19 @@ are used, which were added in Python 3.3. It'd be possible to add support for ol
 (including Python 2.7) with compatibility shims. If you ask nicely, I'll a) be overjoyed that
 someone's actually using this library, and b) will consider adding that functionality.
 
+## Installation
+Install with pip:
+
+    pip install dircolors
+
+Install from source:
+
+    python setup.py install
+
+Install from source in development mode:
+
+    python setup.py develop
+
 ## Usage
 Start by creating a `Dircolors` object and calling its `format()` method with the filename you want
 to colorize.
