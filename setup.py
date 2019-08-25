@@ -8,7 +8,7 @@
 
 import os
 import re
-from setuptools import setup
+from setuptools import setup, Extension
 
 def get_version():
     """ get the dircolors version by regex-parsing __init__.py
@@ -39,6 +39,9 @@ setup(
     python_requires = ">=3.3",
     packages        = ['dircolors', 'dircolors.pyls'],
     test_suite      = 'tests.full_suite',
+    ext_modules = [
+        Extension('dircolors._compat', sources=['dircolors/_compat.c'])
+    ],
     entry_points = {
         'console_scripts': [
             'pyls = dircolors.pyls.pyls:main',
