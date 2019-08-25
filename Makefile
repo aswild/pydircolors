@@ -12,10 +12,9 @@ dist:
 	rm -rf dist
 	$(PYTHON) setup.py sdist bdist_wheel
 
-venv: venv/bin/activate
-venv/bin/activate:
+venv:
 	$(PYTHON) -m venv venv
-	. $@; pip install -U pip; pip install -r requirements-dev.txt
+	. ./venv/bin/activate; pip install -U pip ipython; pip install -r requirements-dev.txt
 
 clean:
 	find . -path ./venv -prune -o -name __pycache__ -exec rm -rf {} \; -prune
