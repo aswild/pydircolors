@@ -6,11 +6,11 @@ test:
 	$(PYTHON) -m unittest -v tests
 
 lint:
-	pylint dircolors tests setup.py
+	pylint dircolors tests
 
 dist:
 	rm -rf dist
-	$(PYTHON) setup.py sdist bdist_wheel
+	flit build
 
 venv:
 	$(PYTHON) -m venv venv
@@ -18,7 +18,7 @@ venv:
 
 clean:
 	find . -path ./venv -prune -o -name __pycache__ -exec rm -rf {} \; -prune
-	rm -rf build dist *.egg-info
+	rm -rf dist
 
 distclean: clean
 	rm -rf venv
