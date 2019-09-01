@@ -17,21 +17,38 @@ are used, which were added in Python 3.3. It'd be possible to add support for ol
 (including Python 2.7) with compatibility shims. If you ask nicely, I'll a) be overjoyed that
 someone's actually using this library, and b) will consider adding that functionality.
 
+Distributions are built using [flit](https://github.com/takluyver/flit) and PEP 517 rather than
+setuptools (setup.py). Installing from PyPi using pip works as usual, flit is only needed for
+building sdists and wheels from git source.
+
 ## Installation
 Install with pip:
 
     pip install dircolors
 
-Install from source:
+Install from source (should be used in a venv, don't run pip as root):
 
-    python setup.py install
+    flit install
+    pip install .   # requires pip >= 19.0
 
-Install from source in development mode:
+Install from source in editable development mode (should be used in a venv):
 
-    python setup.py develop
+    flit install -s
 
 On Arch Linux and its derivatives, you can install the
 [python-dircolors](https://aur.archlinux.org/packages/python-dircolors) AUR package.
+
+### Helper Makefile
+This repo contains a makefile as a convenience that wraps some common development tasks. Possible
+make targets are:
+  * `test` (the default): run unit tests
+  * `venv`: set up a new python3 venv in the 'venv' directory and install an up-to-date pip,
+    ipython, and everything from requirements-dev.txt (including flit). You should run
+    `source ./venv/bin/activate` after `make venv` to enter the venv.
+  * `lint`: run pylint
+  * `dist`: build distribution sdist and wheel with flit
+  * `clean`: remove built dist packages and all \_\_pycache\_\_ files
+  * `distclean`: clean, plus remove the entire venv
 
 ## Usage
 Start by creating a `Dircolors` object and calling its `format()` method with the filename you want
