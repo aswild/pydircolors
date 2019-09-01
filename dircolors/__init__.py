@@ -5,6 +5,6 @@
 
 """ Python library to colorize filenames in a terminal based on their type """
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 from .dircolors import Dircolors
