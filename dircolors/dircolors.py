@@ -123,7 +123,8 @@ class Dircolors:
         opened in text mode (i.e. a subclass of io.TextIOBase). To load from the
         contents of a .dircolors file, wrap it in an io.StringIO object.
 
-        If strict is True, raise ValueError on the first unparsed line
+        If strict is True, raise ValueError on the first unparsed line,
+        otherwise invalid lines will be silently ignored.
 
         Returns a boolean indicating whether any data was loaded.
         The current database will always be cleared. """
@@ -275,6 +276,11 @@ class Dircolors:
             linkname -> target
         With linkname formatted as a link color, and the link target formatted as its respective
         type. If the link target is another link, it will not be recursively dereferenced. """
+
+        if not (cwd is None or isinstance(cwd, str) or isinstance(cwd, int)):
+            # TODO: handle Python 3.6 path-like objects too
+            raise ValueError('cwd must be str or int, not %s'%type(cwd))
+
         if not self.loaded:
             return file
 
@@ -286,9 +292,18 @@ class Dircolors:
         mode = statbuf.st_mode
         if (not follow_symlinks) and show_target and stat.S_ISLNK(mode):
             target_path = readlink_at(file, cwd)
+            if cwd is None:
+                link_dir = os.path.dirname(file.rstrip('/'))
+            elif isinstance(cwd, str):
+                link_dir = os.path.dirname(os.path.join(cwd, file).rstrip('/'))
+            elif isinstance(cwd, int):
+                # linux-specific hack: we have a dir fd and need to know where that points,
+                # seems the best way is to look at /proc/self/fd/<fd>
+                cwd_dir = os.readlink('/proc/self/fd/%d'%cwd)
+                link_dir = os.path.dirname(os.path.join(cwd_dir, file).rstrip('/'))
             try:
-                stat_at(target_path, cwd) # check for broken link
-                target = self.format(target_path, cwd, False, False)
+                stat_at(target_path, link_dir) # check for broken link
+                target = self.format(target_path, link_dir, False, False)
             except OSError:
                 # format as "orphan"
                 target = self._format_code(target_path, 'or') + ' [broken link]'
