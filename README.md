@@ -116,8 +116,6 @@ See the LICENSE.txt file for more information.
 ## TODO
 Items needed for a v0.1.0 release:
   * Clean up `pyls` and add some argparse support. Also document it here.
-  * Add tests for the color formatting functionality rather than just loading data.
-  * Upload to PyPi
 
 Items needed for a v1.0.0 release:
   * Sphinx documentation
